@@ -28,6 +28,16 @@ function drawHexDetail(ctx, x, y, cell, size) {
 	var cx = x + (size / 2.0);
 	var cy = y + (size / 2.0);
 
+	// Draw troops
+	if(cell.controller > 0) {
+		var troopRadius = 
+			Math.floor((size / 3.0) * (cell.troops / 100.0));
+		ctx.beginPath();
+		ctx.arc(cx, cy, troopRadius, 0, 2*Math.PI, false);
+		ctx.fillStyle = gameCfg.player[cell.controller].color;
+		ctx.fill();
+	}
+
 	// Draw cities
 	if(cell.productivity > 20) {
 		// City size is productivity 20 - 100
@@ -107,6 +117,8 @@ function drawHexDetail(ctx, x, y, cell, size) {
 		ctx.lineTo(cx - oneseg*1.5, cy - (oneseg / 1.25));
 		ctx.stroke();
 	}
+
+
 }
 
 function terrainToColor (terrain) {
@@ -194,7 +206,6 @@ function updateDisplay() {
 				gameCfg.boardX, 
 				gameCfg.boardY, 
 				gameCfg.cellSize);
-	//hitGrid(document.getElementById('mycanvas').getContext('2d'));
 }
 
 function hitGrid(ctx) {
@@ -241,7 +252,7 @@ function positionToCell(x,y) {
 		}
 	}
 
-	if(hx < 0 || hy < 0) return;
+	if(hx < 0 || hy < 0) return null;
 
 	var p1x = cx;
 	var p1y = cy - hd;
@@ -250,10 +261,9 @@ function positionToCell(x,y) {
 	var spigot = Math.round(angle / 30.0);
 	if (spigot == 6) spitgot = 0;
 
-	//alert("angle: " + angle + " spigot: " + spigot);
+	return { x: hx, y: hy, spigot: spigot };
 
-	board[hy][hx].spigot[spigot] = !board[hy][hx].spigot[spigot];
-	updateDisplay();
+	//alert("angle: " + angle + " spigot: " + spigot);
 }
 
 
