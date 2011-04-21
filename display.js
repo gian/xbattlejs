@@ -96,7 +96,7 @@ function drawHexDetail(ctx, x, y, cell, size) {
 		ctx.beginPath();
 		ctx.lineWidth=2;
 		ctx.moveTo(cx,cy);
-		ctx.lineTo(cx - oneseg*1.5, cy - (oneseg / 1.25));
+		ctx.lineTo(cx - oneseg*1.5, cy + (oneseg / 1.25));
 		ctx.stroke();
 	}
 
@@ -104,7 +104,7 @@ function drawHexDetail(ctx, x, y, cell, size) {
 		ctx.beginPath();
 		ctx.lineWidth=2;
 		ctx.moveTo(cx,cy);
-		ctx.lineTo(cx - oneseg*1.5, cy + (oneseg / 1.25));
+		ctx.lineTo(cx - oneseg*1.5, cy - (oneseg / 1.25));
 		ctx.stroke();
 	}
 }
@@ -141,7 +141,7 @@ function terrainToColor (terrain) {
 		b = 173-fct;
 	}*/
 
-	var fct = Math.floor((terrain / 100.0) * 255.0);
+	var fct = Math.floor((terrain / 100.0) * 155.0) + 100;
 
 	return 'rgb('+fct+','+fct+','+fct+')';
 }
@@ -173,6 +173,9 @@ function drawGrid(ctx, width, height, size) {
 			var terrain = board[y][x].terrain;
 			var color = terrainToColor(terrain);
 
+			board[y][x].centerX = (xoff + x * sz2x) + (size / 2.0);
+			board[y][x].centerY = (y * yoff) + (size / 2.0);
+
 			drawHex(ctx,xoff + x * sz2x,  y * yoff, size, color);
 			drawHexDetail(ctx, xoff + x * sz2x, y * yoff, board[y][x], size);
 		}
@@ -191,6 +194,66 @@ function updateDisplay() {
 				gameCfg.boardX, 
 				gameCfg.boardY, 
 				gameCfg.cellSize);
+	//hitGrid(document.getElementById('mycanvas').getContext('2d'));
+}
+
+function hitGrid(ctx) {
+	for(var x = 0; x < gameCfg.boardX*2.5; x++) {
+		ctx.moveTo(x * gameCfg.cellSize * 0.75, 0);
+		ctx.lineTo(x * gameCfg.cellSize * 0.75, gameCfg.cellSize * gameCfg.boardY);
+		ctx.strokeStyle = '#FF0000';
+		ctx.lineWidth = 1;
+		ctx.stroke();
+	}
+
+	for(var y = 0; y < gameCfg.boardY*2.5; y++) {
+		ctx.moveTo(0, y * gameCfg.cellSize);
+		ctx.lineTo(gameCfg.cellSize * gameCfg.boardX * 2.5, y * gameCfg.cellSize);
+		ctx.strokeStyle = '#FF0000';
+		ctx.lineWidth = 1;
+		ctx.stroke();
+	}
+}
+
+function positionToCell(x,y) {
+	var s = gameCfg.cellSize;
+	var r = s / 2;
+
+	var hx = -1;
+	var hy = -1;
+	var hd = -1;
+	var cx = -1;
+	var cy = -1;
+
+	for(var yi = 0; yi<gameCfg.boardY; yi++) {
+		for(var xi = 0; xi<gameCfg.boardX; xi++) {
+			var xp = board[yi][xi].centerX;
+			var yp = board[yi][xi].centerY;
+			var d = Math.sqrt((xp-x)*(xp-x) + (yp-y)*(yp-y));
+			if(d < r) {
+				hd = d;
+				hx = xi;
+				hy = yi;
+				cx = xp;
+				cy = yp;
+				break;
+			}
+		}
+	}
+
+	if(hx < 0 || hy < 0) return;
+
+	var p1x = cx;
+	var p1y = cy - hd;
+	var angle = Math.atan2(y - p1y, x - p1x) * 180 / Math.PI;
+
+	var spigot = Math.round(angle / 30.0);
+	if (spigot == 6) spitgot = 0;
+
+	//alert("angle: " + angle + " spigot: " + spigot);
+
+	board[hy][hx].spigot[spigot] = !board[hy][hx].spigot[spigot];
+	updateDisplay();
 }
 
 

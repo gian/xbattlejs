@@ -20,5 +20,6 @@ function instantiateGame(nCities,rSea,rPlains,rMountains) {
 window.onload =
 function () {
 	instantiateGame();
+	initialiseControl();
 };
 
