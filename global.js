@@ -19,7 +19,7 @@ gameCfg.player[1].color = 'red';
 gameCfg.player[2].color = '#00ff00';
 gameCfg.player[3].color = '#000000';
 
-var localPlayer = 1;
+var localPlayer = 2;
 
 // === Utilities ===
 

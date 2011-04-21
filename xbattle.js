@@ -6,22 +6,14 @@ function instantiateGame(nCities,rSea,rPlains,rMountains) {
 		board[y] = [];
 		for(var x = 0; x<gameCfg.boardX; x++) {
 			board[y][x] = {};
-			var rnd = Math.floor(Math.random()*100);
-			board[y][x].terrain = rnd;
+			board[y][x].terrain = 0;
 			board[y][x].spigot = [0,0,0,0,0,0];
-			board[y][x].productivity = Math.floor(Math.random() * 100);
-
-			var troops = Math.floor(Math.random() * 100);
-
-			if(troops > 60) {
-				board[y][x].controller = Math.floor(Math.random() * 4);
-				board[y][x].troops = Math.floor(Math.random() * 100);
-			} else {
-				board[y][x].controller = 0;
-				board[y][x].troops = 0;
-			}
+			board[y][x].productivity = 0;
+			board[y][x].troops = 0;
 		}
 	}
+
+	sendUpdate();
 
 	updateDisplay();
 }
@@ -42,6 +34,7 @@ function gameTick() {
 
 	updateDisplay();
 
+	sendUpdate();
 	setTimeout(gameTick, gameCfg.tickInterval);
 }
 
@@ -62,7 +55,6 @@ function shuffleCells() {
 
 window.onload =
 function () {
-	nettest();
 	instantiateGame();
 	initialiseControl();
 
