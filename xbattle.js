@@ -62,6 +62,7 @@ function shuffleCells() {
 
 window.onload =
 function () {
+	nettest();
 	instantiateGame();
 	initialiseControl();
 
