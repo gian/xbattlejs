@@ -22,6 +22,7 @@ function drawHex(ctx, x, y, size, color) {
 
 	ctx.fill();
 	ctx.stroke();
+
 }
 
 function drawHexDetail(ctx, x, y, cell, size) {
@@ -118,6 +119,8 @@ function drawHexDetail(ctx, x, y, cell, size) {
 		ctx.stroke();
 	}
 
+	//var pp = positionToCell(cx,cy);
+	//ctx.strokeText("("+pp.x+","+pp.y+")", cx, cy); 
 
 }
 

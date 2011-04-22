@@ -19,7 +19,7 @@ function instantiateGame(nCities,rSea,rPlains,rMountains) {
 }
 
 function gameTick() {
-	var l = shuffleCells();
+	/*var l = shuffleCells();
 
 	for(var i = 0; i<l.length; i++) {
 		var c = board[l[i].y][l[i].x];
@@ -30,11 +30,11 @@ function gameTick() {
 			else
 				c.troops += (c.productivity / gameCfg.fullTurns);
 		}
-	}
+	}*/
 
-	updateDisplay();
 
 	sendUpdate();
+	updateDisplay();
 	setTimeout(gameTick, gameCfg.tickInterval);
 }
 

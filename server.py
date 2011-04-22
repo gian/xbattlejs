@@ -5,9 +5,92 @@ import tornado.web
 import os.path
 import json
 import random
+import time
+import math
 
-games = dict()
+cfg = dict()
+
+game = dict()
 ngames = 0
+lastUpdate = time.time()
+
+def updateTroops(delta, productivity, currentLevel):
+	global cfg
+
+	if currentLevel >= 100:
+		return 100
+	
+	incr = int(productivity / (cfg['growthRate'] / delta))
+
+	if currentLevel + incr == 100:
+		return 100
+	
+	return currentLevel + incr
+
+def findAdjacent(cell,spigot):
+	y = math.floor(cell / game['width'])
+	x = cell - (y * game['width'])
+
+	if spigot == 6:
+		spigot = 0
+
+	evens = [[0,-2],[1,-1],[1,1],[0,2],[0,1],[0,-1]]
+	odds =  [[0,-2],[0,-1],[0,1],[0,2],[-1,1],[-1,-1]]
+
+	print "Spigot: " + str(spigot)
+
+	# Even Y
+	if y % 2 == 0:
+		xp = evens[spigot][0] + x
+		yp = evens[spigot][1] + y
+		return int((game['width'] * yp) + xp)
+	else:
+		xp = odds[spigot][0] + x
+		yp = odds[spigot][1] + y
+		return int((game['width'] * yp) + xp)
+
+def flow(delta,src,dst):
+	global game
+	global cfg
+
+	fr = (cfg['flowRate'] / (1.0/delta))
+	
+	if game['board'][src]['troops'] < fr:
+		fr = game['board'][src]['troops'] - 1
+	
+	game['board'][src]['troops'] = game['board'][src]['troops'] - fr
+	game['board'][dst]['troops'] = game['board'][dst]['troops'] + fr
+
+	if game['board'][dst]['controller'] == 0 and fr > 0:
+		game['board'][dst]['controller'] = game['board'][src]['controller']
+
+def updateFlow(delta, i):
+	global game
+	global cfg
+
+	if game['board'][i]['troops'] == 0:
+		return
+	
+	for s in range(0,len(game['board'][i]['spigot'])):
+		if game['board'][i]['spigot'][s]:
+			adj = findAdjacent(i,s)
+			flow(delta,i,adj)
+
+def stateUpdate():
+	global game
+	global lastUpdate
+	global cfg
+	ctime = time.time()
+	delta = ctime - lastUpdate
+	sortOrder = range(0,game['width']*game['height'])
+	random.shuffle(sortOrder)
+	lastUpdate = ctime
+
+	for i in sortOrder:
+		game['board'][i]['troops'] = updateTroops(delta,game['board'][i]['productivity'],game['board'][i]['troops'])
+		updateFlow(delta,i)
+
+	print "[state update] delta: " + str(delta) + ", order:" 
 
 def generateTerrain(w,h):
 	board = []
@@ -17,46 +100,44 @@ def generateTerrain(w,h):
 			i = (y * w) + x
 			b = dict()
 			b['terrain'] = random.randint(0,100)
-			b['controller'] = random.randint(0,3)
+			b['controller'] = 0 
 			b['productivity'] = random.randint(0,100)
 			b['troops'] = 0
 			b['spigot'] = [0,0,0,0,0,0]
 			b['x'] = x
 			b['y'] = y
 			board.append(b)
+	
+	board[35]['controller'] = 2
+	board[35]['troops'] = 50
 	return board
 
-class StateHandler(tornado.web.RequestHandler):
-	def get(self, game, player):
-		global games
-		self.write(json.dumps(games[int(game)]))
+def init(width,height):
+	global game
+	game['width'] = int(width)
+	game['height'] = int(height)
+	game['board'] = generateTerrain(int(width),int(height))
 
-	def post(self, game, player):
-		global games
+class StateHandler(tornado.web.RequestHandler):
+	def get(self, g, player):
+		global game
+		stateUpdate()
+		self.write(json.dumps(game))
+
+	def post(self, g, player):
+		global game
 		delta = json.loads(self.get_argument("data"))
 		
 		for d in delta:
-			print "DELTA: X: " + str(d['x']) + " Y: " + str(d['y'])
-			i = (int(d['y']) * games[int(game)]['width']) + int(d['x'])
-			g = games[int(game)]['board'][i]
+			i = (int(d['y']) * game['width']) + int(d['x'])
+			g = game['board'][i]
 			#g['controller'] = d['controller']
-			g['troops'] = d['troops']
+			#g['troops'] = d['troops']
 			g['spigot'] = d['spigot']
 
-		self.write(json.dumps(games[int(game)]))
+		stateUpdate()
 
-class NewHandler(tornado.web.RequestHandler):
-	def get(self, width, height):
-		global games
-		global ngames
-		games[ngames] = dict()
-		games[ngames]['width'] = int(width)
-		games[ngames]['height'] = int(height)
-		games[ngames]['board'] = generateTerrain(int(width),int(height))
-
-		self.write("{id: " + str(ngames) + "}");
-		ngames = ngames + 1
-		print str(games)
+		self.write(json.dumps(game))
 
 settings = {
     "static_path": os.path.dirname(__file__)
@@ -64,10 +145,12 @@ settings = {
 
 application = tornado.web.Application([
     (r"/state/([0-9]+)/([0-9]+)", StateHandler),
-    (r"/new/([0-9]+)/([0-9]+)", NewHandler),
 ], **settings)
 
 if __name__ == "__main__":
+	cfg['growthRate'] = 10 # How many seconds to fill a hex at 100% productivity?
+	cfg['flowRate'] = 5    # How many troops flow through a spigot per tick?
+	init(10,28)
 	application.listen(8888)
 	tornado.ioloop.IOLoop.instance().start()
 

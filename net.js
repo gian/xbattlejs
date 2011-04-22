@@ -12,6 +12,18 @@ function updateBoard(state) {
 	}
 }
 
+function pollUpdate() {
+		$.ajax({
+		url: '/state/0/1',
+		async: true,
+		success: function(data) {
+			update = []
+			updateBoard(jQuery.parseJSON( data ));
+	   	//alert(data);
+		}
+	});
+}
+
 function sendUpdate() {
 	//alert(board);
 	//window.location = 'http://foo.bar';
