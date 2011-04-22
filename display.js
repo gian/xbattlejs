@@ -119,8 +119,8 @@ function drawHexDetail(ctx, x, y, cell, size) {
 		ctx.stroke();
 	}
 
-	var pp = positionToCell(cx,cy);
-	ctx.strokeText(board[pp.y][pp.x].troops, cx, cy); 
+	//var pp = positionToCell(cx,cy);
+	//ctx.strokeText(board[pp.y][pp.x].troops, cx, cy); 
 }
 
 function terrainToColor (terrain) {
