@@ -20,9 +20,9 @@ def updateTroops(delta, productivity, currentLevel):
 	if currentLevel >= 100:
 		return 100
 	
-	incr = int(productivity / (cfg['growthRate'] / delta))
+	incr = int((productivity / 100.0) * (cfg['growthRate'] * delta))
 
-	if currentLevel + incr == 100:
+	if currentLevel + incr > 100:
 		return 100
 	
 	return currentLevel + incr
@@ -49,14 +49,20 @@ def findAdjacent(cell,spigot):
 		yp = odds[spigot][1] + y
 		return int((game['width'] * yp) + xp)
 
-def flow(delta,src,dst):
+def flow(delta,nspig,src,dst):
 	global game
 	global cfg
 
-	fr = (cfg['flowRate'] / (1.0/delta))
+	fr = int(float(cfg['flowRate'] * delta) / float(nspig))
 	
 	if game['board'][src]['troops'] < fr:
 		fr = game['board'][src]['troops'] - 1
+	
+	if game['board'][dst]['troops'] + fr > 100:
+		fr = (100 - game['board'][dst]['troops'])
+	
+	if fr < 0:
+		fr = 0
 	
 	game['board'][src]['troops'] = game['board'][src]['troops'] - fr
 	game['board'][dst]['troops'] = game['board'][dst]['troops'] + fr
@@ -64,17 +70,21 @@ def flow(delta,src,dst):
 	if game['board'][dst]['controller'] == 0 and fr > 0:
 		game['board'][dst]['controller'] = game['board'][src]['controller']
 
+	print "Flow from " + str(src) + " to " + str(dst) + " of amount " + str(fr)
+
 def updateFlow(delta, i):
 	global game
 	global cfg
 
 	if game['board'][i]['troops'] == 0:
 		return
-	
+
+	nspig = sum(game['board'][i]['spigot'])
+
 	for s in range(0,len(game['board'][i]['spigot'])):
 		if game['board'][i]['spigot'][s]:
 			adj = findAdjacent(i,s)
-			flow(delta,i,adj)
+			flow(delta,nspig,i,adj)
 
 def stateUpdate():
 	global game
@@ -87,8 +97,9 @@ def stateUpdate():
 	lastUpdate = ctime
 
 	for i in sortOrder:
-		game['board'][i]['troops'] = updateTroops(delta,game['board'][i]['productivity'],game['board'][i]['troops'])
 		updateFlow(delta,i)
+		if game['board'][i]['controller'] > 0:
+			game['board'][i]['troops'] = updateTroops(delta,game['board'][i]['productivity'],game['board'][i]['troops'])
 
 	print "[state update] delta: " + str(delta) + ", order:" 
 

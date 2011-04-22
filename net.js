@@ -2,7 +2,7 @@ function updateBoard(state) {
 	for(var i = 0; i<state.board.length; i++) {
 		var c = state.board[i];
 
-		if(board[c.y][c.x] != localPlayer)
+		if(board[c.y][c.x] != localPlayer || (board[c.y][c.x] != localPlayer && c.controller == localPlayer))
 			board[c.y][c.x].spigot = c.spigot;
 
 		board[c.y][c.x].controller = c.controller;
